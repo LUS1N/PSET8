@@ -16,7 +16,7 @@
     define("PASSWORD", "");
 
     // your database's server
-    define("SERVER", "localhost");
+    define("SERVER", "127.0.0.1");
 
     // your database's username
     define("USERNAME", "root");
