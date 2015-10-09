@@ -18,10 +18,13 @@
     // extracts all the values to it
     $extracted = extractGeoValues($names);
 
-    // creates sql statement for the values provided
-    $sql = createSQLStatement($extracted);
+    if ($extracted !== null)
+    {
+        // creates sql statement for the values provided
+        $sql = createSQLStatement($extracted);
+        $places = query($sql);
+    }
 
-    $places = query($sql);
 
     // output places as JSON (pretty-printed for debugging convenience)
     header("Content-type: application/json");
@@ -60,6 +63,12 @@
      */
     function extractGeoValues($names)
     {
+        if (empty($names))
+        {
+            return null;
+        }
+        $extracted = [];
+
         foreach ($names as $val)
         {
             // check if it's a number
