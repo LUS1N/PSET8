@@ -2150,15 +2150,14 @@
       <column name="longitude" sqlType="DECIMAL" precision="7" scale="4" nullable="false" jdbcType="3"/>
       <column name="accuracy" sqlType="TINYINT" precision="3" scale="0" nullable="false" jdbcType="-6"/>
       <primary-key name="PRIMARY" columns="id"/>
-      <index name="admin_code1" unique="false" columns="admin_code1"/>
-      <index name="admin_code1_2" unique="false" columns="admin_code1"/>
-      <index name="admin_name1" unique="false" columns="admin_name1"/>
-      <index name="place_name" unique="false" columns="place_name"/>
-      <index name="place_name_2" unique="false" columns="place_name"/>
+      <index name="place_name" unique="false" columns="place_name,admin_name1"/>
+      <index name="place_name_2" unique="false" columns="place_name,admin_name1,admin_name2"/>
       <index name="postal_code" unique="false" columns="postal_code"/>
     </table>
     <table name="states" schema="" catalog="pset8" type="TABLE">
       <column name="state" sqlType="VARCHAR" precision="20" scale="0" nullable="false" jdbcType="12"/>
+      <index name="state" unique="false" columns="state"/>
+      <index name="state_2" unique="false" columns="state"/>
     </table>
     <table name="user_pwd" schema="" catalog="webauth" type="TABLE">
       <column name="name" sqlType="CHAR" precision="30" scale="0" nullable="false" jdbcType="1" def="Jyc="/>

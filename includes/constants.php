@@ -21,4 +21,4 @@
     // your database's username
     define("USERNAME", "root");
 
-?>
+    define("SQL", "SELECT * FROM places WHERE ");

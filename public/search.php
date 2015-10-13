@@ -12,24 +12,40 @@
     // numerically indexed array of places
     $places = [];
 
-    // use regex to split by space or comma
-    $names = preg_split("/[\s,]+/", $_GET["geo"]);
-
-    // extracts all the values to it
-    $extracted = extractGeoValues($names);
-
-    if ($extracted !== null)
+    // only look for things if the query is more than 4 chars
+    if (strlen($_GET['geo']) >= 4)
     {
-        // creates sql statement for the values provided
-        $sql = createSQLStatement($extracted);
-        $places = query($sql);
-    }
+        // use regex to split by space or comma
+        $names = preg_split("/[\s,]+/", $_GET["geo"]);
 
+        // extracts all the values to it
+        $extracted = extractGeoValues($names);
+        $places = createAndExecuteQuery($extracted);
+    }
 
     // output places as JSON (pretty-printed for debugging convenience)
     header("Content-type: application/json");
     print(json_encode($places, JSON_PRETTY_PRINT));
 
+    /**
+     * @param $extracted
+     * Checks the geo string for a state value
+     */
+    function checkState(&$extracted)
+    {
+        global $stateNames;
+        $matches = [];
+        foreach ($stateNames as $state)
+        {
+            $regex = "/" . $state . "/";
+            if (preg_match($regex, $_GET['geo'], $matches))
+            {
+                $extracted['admin_name1'] = $matches[0];
+
+                return;
+            }
+        }
+    }
 
     /**
      * @param $extracted
@@ -37,20 +53,28 @@
      * @return string
      * prepares the sql statement for the geo location
      */
-    function createSQLStatement($extracted)
+    function createAndExecuteQuery($extracted)
     {
-        $sql = "SELECT * FROM places WHERE ";
-
-        // add each field to selection
-        foreach ($extracted as $key => $val)
+        if (isset($extracted['postal_code']))
         {
-            $sql = $sql . $key . " = '$val' AND ";
+            $places = query((SQL . "postal_code = ?"), $extracted["postal_code"]);
+        }
+        else if (isset($extracted['admin_code1']))
+        {
+            $places = query((SQL . " MATCH (place_name, admin_name1, admin_name2) AGAINST (?) AND admin_code1 = ?"),
+                $extracted['place_name'], $extracted['admin_code1']);
+        }
+        else if (isset($extracted['admin_name1']))
+        {
+            $places = query((SQL . " MATCH (place_name, admin_name1, admin_name2) AGAINST (?) AND admin_name1 = ?"),
+                $extracted['place_name'], $extracted['admin_name1']);
+        }
+        else
+        {
+            $places = query((SQL . " MATCH (place_name, admin_name1, admin_name2) AGAINST (?)"), $extracted['place_name']);
         }
 
-        // trim the last AND
-        $sql = substr($sql, 0, strlen($sql) - 4);
-
-        return $sql;
+        return $places;
     }
 
     /**
@@ -63,11 +87,15 @@
      */
     function extractGeoValues($names)
     {
+        global $stateCodes;
         if (empty($names))
         {
             return null;
         }
         $extracted = [];
+
+        // extract state if it's there
+        checkState($extracted);
 
         foreach ($names as $val)
         {
@@ -75,47 +103,58 @@
             if ((string)(int)$val == $val)
             {
                 $extracted["postal_code"] = $val;
+
+                // return right away because that's the most specific we can get
+                return $extracted;
             }
             // check if it's the state code
-            else if (strlen($val) == 2)
+            else if (strlen($val) == 2 && strcmp($val, 'US') != 0)
             {
-                if (strcmp($val, 'US') != 0)
+                if (in_array(strtoupper($val), $stateCodes))
                 {
                     $extracted["admin_code1"] = $val;
                 }
             }
             else
             {
-                extractStateAndPlace($val, $extracted);
+                extractPlaceName($val, $extracted);
             }
         }
+        cutOutState($extracted);
 
         return $extracted;
+    }
+
+    /**
+     * @param $extracted
+     * Cuts out state out of place name if it's set
+     */
+    function cutOutState(&$extracted)
+    {
+        if (!isset($extracted['admin_name1']))
+        {
+            return;
+        }
+        $state = $extracted['admin_name1'];
+        $start = strpos($extracted['place_name'], $state);
+        $end = strlen($state) + $start;
+        $extracted['place_name'] = substr($extracted['place_name'], 0, $start) . substr($extracted['place_name'], $end);
     }
 
     /**
      * @param $val
      * @param $extracted
      *
-     * extracts the values as state code or place name
+     * extracts the values as place name
      */
-    function extractStateAndPlace($val, &$extracted)
+    function extractPlaceName($val, &$extracted)
     {
-        // check if string is a state name
-        if (count(query("SELECT state FROM states WHERE state = ? ", $val)) == 1)
+        if (isset($extracted["place_name"]))
         {
-            $extracted["admin_name1"] = $val;
+            $extracted["place_name"] = $extracted["place_name"] . " " . $val;
         }
         else
         {
-            // if it's not append it to the place name
-            if (isset($extracted["place_name"]))
-            {
-                $extracted["place_name"] = $extracted["place_name"] . " " . $val;
-            }
-            else
-            {
-                $extracted["place_name"] = $val;
-            }
+            $extracted["place_name"] = $val;
         }
     }

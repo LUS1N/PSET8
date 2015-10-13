@@ -17,7 +17,8 @@ var markers = [];
 var info = new google.maps.InfoWindow();
 
 // execute when the DOM is fully loaded
-$(function() {
+$(function ()
+{
 
     // styles for map
     // https://developers.google.com/maps/documentation/javascript/styling
@@ -81,37 +82,41 @@ function addMarker(place)
 function configure()
 {
     // update UI after map has been dragged
-    google.maps.event.addListener(map, "dragend", function() {
+    google.maps.event.addListener(map, "dragend", function ()
+    {
         update();
     });
 
     // update UI after zoom level changes
-    google.maps.event.addListener(map, "zoom_changed", function() {
+    google.maps.event.addListener(map, "zoom_changed", function ()
+    {
         update();
     });
 
     // remove markers whilst dragging
-    google.maps.event.addListener(map, "dragstart", function() {
+    google.maps.event.addListener(map, "dragstart", function ()
+    {
         removeMarkers();
     });
 
     // configure typeahead
     // https://github.com/twitter/typeahead.js/blob/master/doc/jquery_typeahead.md
     $("#q").typeahead({
-        autoselect: true,
-        highlight: true,
-        minLength: 1
-    },
-    {
-        source: search,
-        templates: {
-            empty: "no places found yet",
-            suggestion: _.template("<p>TODO</p>")
-        }
-    });
+            autoselect: true,
+            highlight: true,
+            minLength: 1
+        },
+        {
+            source: search,
+            templates: {
+                empty: "no places found yet",
+                suggestion: _.template("<p><%- place_name %>, <%- admin_name1 %></p>")
+            }
+        });
 
     // re-center map after place is selected from drop-down
-    $("#q").on("typeahead:selected", function(eventObject, suggestion, name) {
+    $("#q").on("typeahead:selected", function (eventObject, suggestion, name)
+    {
 
         // ensure coordinates are numbers
         var latitude = (_.isNumber(suggestion.latitude)) ? suggestion.latitude : parseFloat(suggestion.latitude);
@@ -125,15 +130,17 @@ function configure()
     });
 
     // hide info window when text box has focus
-    $("#q").focus(function(eventData) {
+    $("#q").focus(function (eventData)
+    {
         hideInfo();
     });
 
     // re-enable ctrl- and right-clicking (and thus Inspect Element) on Google Map
     // https://chrome.google.com/webstore/detail/allow-right-click/hompjdfbfmmmgflfjdlnkohcplmboaeo?hl=en
-    document.addEventListener("contextmenu", function(event) {
-        event.returnValue = true; 
-        event.stopPropagation && event.stopPropagation(); 
+    document.addEventListener("contextmenu", function (event)
+    {
+        event.returnValue = true;
+        event.stopPropagation && event.stopPropagation();
         event.cancelBubble && event.cancelBubble();
     }, true);
 
@@ -170,16 +177,18 @@ function search(query, cb)
         geo: query
     };
     $.getJSON("search.php", parameters)
-    .done(function(data, textStatus, jqXHR) {
+        .done(function (data, textStatus, jqXHR)
+        {
 
-        // call typeahead's callback with search results (i.e., places)
-        cb(data);
-    })
-    .fail(function(jqXHR, textStatus, errorThrown) {
+            // call typeahead's callback with search results (i.e., places)
+            cb(data);
+        })
+        .fail(function (jqXHR, textStatus, errorThrown)
+        {
 
-        // log error to browser's console
-        console.log(errorThrown.toString());
-    });
+            // log error to browser's console
+            console.log(errorThrown.toString());
+        });
 }
 
 /**
@@ -212,7 +221,7 @@ function showInfo(marker, content)
 /**
  * Updates UI's markers.
  */
-function update() 
+function update()
 {
     // get map's bounds
     var bounds = map.getBounds();
@@ -226,20 +235,22 @@ function update()
         sw: sw.lat() + "," + sw.lng()
     };
     $.getJSON("update.php", parameters)
-    .done(function(data, textStatus, jqXHR) {
-
-        // remove old markers from map
-        removeMarkers();
-
-        // add new markers to map
-        for (var i = 0; i < data.length; i++)
+        .done(function (data, textStatus, jqXHR)
         {
-            addMarker(data[i]);
-        }
-     })
-     .fail(function(jqXHR, textStatus, errorThrown) {
 
-         // log error to browser's console
-         console.log(errorThrown.toString());
-     });
-};
+            // remove old markers from map
+            removeMarkers();
+
+            // add new markers to map
+            for (var i = 0; i < data.length; i++)
+            {
+                addMarker(data[i]);
+            }
+        })
+        .fail(function (jqXHR, textStatus, errorThrown)
+        {
+
+            // log error to browser's console
+            console.log(errorThrown.toString());
+        });
+}

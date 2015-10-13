@@ -33,9 +33,8 @@
                 $handle = new PDO("mysql:dbname=" . DATABASE . ";host=" . SERVER, USERNAME, PASSWORD);
 
                 // ensure that PDO::prepare returns false when passed invalid SQL
-                $handle->setAttribute(PDO::ATTR_EMULATE_PREPARES, false); 
-            }
-            catch (Exception $e)
+                $handle->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+            } catch (Exception $e)
             {
                 trigger_error($e->getMessage(), E_USER_ERROR);
                 exit;
@@ -49,7 +48,6 @@
             trigger_error($handle->errorInfo()[2], E_USER_ERROR);
             exit;
         }
-
         // execute SQL statement
         $results = $statement->execute($parameters);
         if ($results === false)
@@ -62,4 +60,3 @@
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
-?>
