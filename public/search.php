@@ -21,11 +21,20 @@
         // extracts all the values to it
         $extracted = extractGeoValues($names);
         $places = createAndExecuteQuery($extracted);
+        printPlaces($places);
+
+    }
+    else
+    {
+        printPlaces([]);
     }
 
     // output places as JSON (pretty-printed for debugging convenience)
-    header("Content-type: application/json");
-    print(json_encode($places, JSON_PRETTY_PRINT));
+    function printPlaces($places)
+    {
+        header("Content-type: application/json");
+        print(json_encode($places, JSON_PRETTY_PRINT));
+    }
 
     /**
      * @param $extracted
@@ -71,7 +80,8 @@
         }
         else
         {
-            $places = query((SQL . " MATCH (place_name, admin_name1, admin_name2) AGAINST (?)"), $extracted['place_name']);
+            $places = query((SQL . " MATCH (place_name, admin_name1, admin_name2) AGAINST (?)"),
+                $extracted['place_name']);
         }
 
         return $places;
