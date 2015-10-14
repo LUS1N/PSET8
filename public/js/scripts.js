@@ -73,7 +73,16 @@ $(function ()
  */
 function addMarker(place)
 {
-    // TODO
+    var myLatLng = {lat: parseFloat(place.latitude), lng: parseFloat(place.longitude)};
+    var marker = new google.maps.Marker({
+        position: myLatLng,
+        title: place.place_name
+    });
+
+    marker.setMap(map);
+    markers.push(marker);
+    var content =
+    google.maps.event.addListener(marker, "click", function (e) { showInfo(this,content) });
 }
 
 /**
@@ -164,7 +173,11 @@ function hideInfo()
  */
 function removeMarkers()
 {
-    // TODO
+    for (var i = 0; i < markers.length; i++)
+    {
+        markers[i].setMap(null);
+    }
+    markers = [];
 }
 
 /**

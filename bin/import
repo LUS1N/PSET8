@@ -19,8 +19,6 @@
         echo "File doesn't exist";
     }
 
-    //echo "hello";
-
     /**
      * @param $file
      * Reads the file and inserts all the information from it to the DB
@@ -40,7 +38,6 @@
               admin_name2, admin_code2, admin_name3, admin_code3, latitude, longitude, accuracy)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $csv[0], $csv[1], $csv[2], $csv[3], $csv[4],
                 $csv[5], $csv[6], $csv[7], $csv[8], $csv[9], $csv[10], $csv[11]);
-
         }
     }
 
