@@ -51,6 +51,7 @@ $(function ()
         disableDefaultUI: true,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         maxZoom: 14,
+        minZoom: 12, // furthest we can zoom out
         panControl: true,
         styles: styles,
         zoom: 13,
@@ -126,8 +127,20 @@ function infoWindowListenerSetUp(marker, place)
  */
 function addMarker(place)
 {
+
     // save lat and lng in and object marking which is needed for the API
     var myLatLng = {lat: parseFloat(place.latitude), lng: parseFloat(place.longitude)};
+
+    for (var i = 0; i < markers.length; i++)
+    {
+        var markerLatLng = {lat: markers[i].getPosition().lat(), lng: markers[i].getPosition().lng()}
+
+        // if a marker at this spot is added don't add it anymore
+        if (markerLatLng.lat.toFixed(4) == myLatLng.lat.toFixed(4) && markerLatLng.lng.toFixed(4) == myLatLng.lng.toFixed(4))
+        {
+            return;
+        }
+    }
 
     // create new marker
     var marker = new MarkerWithLabel({
