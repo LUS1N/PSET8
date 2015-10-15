@@ -69,22 +69,81 @@ $(function ()
 });
 
 /**
+ *
+ * @param marker
+ * @param place
+ *
+ * Adds a listener to passed marker with the information about the place
+ */
+function infoWindowListenerSetUp(marker, place)
+{
+    // adds a listener
+    google.maps.event.addListener(marker, "click", function ()
+    {
+        // starts the showInfo method without content which makes it look like it's being loaded
+        showInfo(this);
+
+        // get articles for place (asynchronously) by posting the postal code of the place
+        $.getJSON("articles.php", {geo: place.postal_code})
+
+            // when it's done use the data
+            .done(function (data, textStatus, jqXHR)
+            {
+                // if no data, no news
+                if (data.length === 0)
+                {
+                    showInfo(marker, "Slow news day!");
+                }
+
+                // else build unordered list of links to articles
+                else
+                {
+                    // start ul
+                    var ul = "<ul>";
+                    // template for li using underscore
+                    var template = _.template("<li><a href='<%- link %>' target='_blank'><%- title %></a></li>");
+                    // iterate over articles
+                    for (var i = 0; i < data.length; i++)
+                    {
+                        // add li to ul
+                        ul += template({link: data[i].link, title: data[i].title});
+                    }
+                    // end ul
+                    ul += "</ul>";
+                    // show info window at marker with content
+                    showInfo(marker, ul);
+                }
+            })
+            .fail(function (jqXHR, textStatus, errorThrown)
+            {
+                // log error to browser's console
+                console.log(errorThrown.toString());
+            });
+    });
+}
+/**
  * Adds marker for place to map.
  */
 function addMarker(place)
 {
+    // save lat and lng in and object marking which is needed for the API
     var myLatLng = {lat: parseFloat(place.latitude), lng: parseFloat(place.longitude)};
-    var marker = new google.maps.Marker({
+
+    // create new marker
+    var marker = new MarkerWithLabel({
+        icon: "https://maps.google.com/mapfiles/kml/pal2/icon31.png", // http://www.lass.it/Web/viewer.aspx?id=4
+        labelAnchor: new google.maps.Point(22, 0),
+        labelContent: place.place_name + ", " + place.admin_name1,
+        labelClass: "labels", // the CSS class for the label
         position: myLatLng,
-        title: place.place_name
+        map: map
     });
 
-    marker.setMap(map);
+    // add marker to the list of markers
     markers.push(marker);
-    var content =
-    google.maps.event.addListener(marker, "click", function (e) { showInfo(this,content) });
-}
 
+    infoWindowListenerSetUp(marker, place);
+}
 /**
  * Configures application.
  */

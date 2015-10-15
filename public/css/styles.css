@@ -23,6 +23,18 @@ html, body, #map-canvas, .container-fluid
     padding: 0;
 }
 
+.labels
+{
+    color: black;
+    font-weight: bold;
+    font-size: 14px;
+    opacity: 1;
+    pointer-events: none;
+    text-align: center;
+    /*width: 60px;*/
+    /*white-space: nowrap;*/
+}
+
 /* align form to right of pan control */
 #form
 {
@@ -84,11 +96,15 @@ html, body, #map-canvas, .container-fluid
     padding: 6px 12px;
     width: 300px;
 }
-.tt-suggestion.tt-cursor {
+
+.tt-suggestion.tt-cursor
+{
     background-color: #0097cf;
     color: #fff;
     cursor: pointer;
 }
-.tt-suggestion p {
+
+.tt-suggestion p
+{
     margin: 0;
 }
