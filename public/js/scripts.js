@@ -69,63 +69,43 @@ $(function ()
 
 });
 
-/**
- *
- * @param marker
- * @param place
- *
- * Adds a listener to passed marker with the information about the place
- */
-function infoWindowListenerSetUp(marker, place)
+function addListenerToMarker(marker, articles)
 {
-    // adds a listener
     google.maps.event.addListener(marker, "click", function ()
     {
         // starts the showInfo method without content which makes it look like it's being loaded
-        showInfo(this);
-
-        // get articles for place (asynchronously) by posting the postal code of the place
-        $.getJSON("articles.php", {geo: place.postal_code})
-
-            // when it's done use the data
-            .done(function (data, textStatus, jqXHR)
-            {
-                // if no data, no news
-                if (data.length === 0)
-                {
-                    showInfo(marker, "Slow news day!");
-                }
-
-                // else build unordered list of links to articles
-                else
-                {
-                    // start ul
-                    var ul = "<ul>";
-                    // template for li using underscore
-                    var template = _.template("<li><a href='<%- link %>' target='_blank'><%- title %></a></li>");
-                    // iterate over articles
-                    for (var i = 0; i < data.length; i++)
-                    {
-                        // add li to ul
-                        ul += template({link: data[i].link, title: data[i].title});
-                    }
-                    // end ul
-                    ul += "</ul>";
-                    // show info window at marker with content
-                    showInfo(marker, ul);
-                }
-            })
-            .fail(function (jqXHR, textStatus, errorThrown)
-            {
-                // log error to browser's console
-                console.log(errorThrown.toString());
-            });
+        // start ul
+        var ul = "<ul>";
+        // template for li using underscore
+        var template = _.template("<li><a href='<%- link %>' target='_blank'><%- title %></a></li>");
+        // iterate over articles
+        for (var i = 0; i < articles.length; i++)
+        {
+            // add li to ul
+            ul += template({link: articles[i].link, title: articles[i].title});
+        }
+        // end ul
+        ul += "</ul>";
+        // show info window at marker with content
+        showInfo(marker, ul);
     });
+}
+function createNewMarker(place, myLatLng)
+{
+    var marker = new MarkerWithLabel({
+        icon: "https://maps.google.com/mapfiles/kml/pal2/icon31.png", // http://www.lass.it/Web/viewer.aspx?id=4
+        labelAnchor: new google.maps.Point(22, 0),
+        labelContent: place.place_name + ", " + place.admin_name1,
+        labelClass: "labels", // the CSS class for the label
+        position: myLatLng,
+        map: map
+    });
+    return marker;
 }
 /**
  * Adds marker for place to map.
  */
-function addMarker(place)
+function addMarker(place, articles)
 {
 
     // save lat and lng in and object marking which is needed for the API
@@ -133,7 +113,7 @@ function addMarker(place)
 
     for (var i = 0; i < markers.length; i++)
     {
-        var markerLatLng = {lat: markers[i].getPosition().lat(), lng: markers[i].getPosition().lng()}
+        var markerLatLng = {lat: markers[i].getPosition().lat(), lng: markers[i].getPosition().lng()};
 
         // if a marker at this spot is added don't add it anymore
         if (markerLatLng.lat.toFixed(4) == myLatLng.lat.toFixed(4) && markerLatLng.lng.toFixed(4) == myLatLng.lng.toFixed(4))
@@ -143,19 +123,12 @@ function addMarker(place)
     }
 
     // create new marker
-    var marker = new MarkerWithLabel({
-        icon: "https://maps.google.com/mapfiles/kml/pal2/icon31.png", // http://www.lass.it/Web/viewer.aspx?id=4
-        labelAnchor: new google.maps.Point(22, 0),
-        labelContent: place.place_name + ", " + place.admin_name1,
-        labelClass: "labels", // the CSS class for the label
-        position: myLatLng,
-        map: map
-    });
+    var marker = createNewMarker(place, myLatLng);
 
+    addListenerToMarker(marker, articles);
     // add marker to the list of markers
     markers.push(marker);
 
-    infoWindowListenerSetUp(marker, place);
 }
 /**
  * Configures application.
@@ -304,6 +277,27 @@ function showInfo(marker, content)
 }
 
 /**
+ * Checks if there are articles for
+ * @param place
+ * and if there are, adds a marker to map
+ */
+function getArticlesAndAddMarker(place)
+{
+    $.getJSON("articles.php", {geo: place.postal_code})
+        .done(function (articles, textStatus, jqXHR)
+        {
+            if (articles.length > 0)
+            {
+                addMarker(place, articles);
+            }
+        })
+        .fail(function (jqXHR, textStatus, errorThrown)
+        {
+            // log error to browser's console
+            console.log(errorThrown.toString());
+        });
+}
+/**
  * Updates UI's markers.
  */
 function update()
@@ -322,19 +316,18 @@ function update()
     $.getJSON("update.php", parameters)
         .done(function (data, textStatus, jqXHR)
         {
-
             // remove old markers from map
             removeMarkers();
 
             // add new markers to map
             for (var i = 0; i < data.length; i++)
             {
-                addMarker(data[i]);
+                // check news for the data. data is a row from db
+                getArticlesAndAddMarker(data[i]);
             }
         })
         .fail(function (jqXHR, textStatus, errorThrown)
         {
-
             // log error to browser's console
             console.log(errorThrown.toString());
         });
